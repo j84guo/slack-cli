@@ -6,7 +6,6 @@ Todo :
 
 import os
 import ssl
-import time
 
 from config import oauth_path
 from subprocess import call
@@ -17,22 +16,23 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 
 class HttpsServer(HTTPServer):
 
-    def __init__(self, address, handler_cls, token_ready):
+    def __init__(self, address, handler_cls, token_ready, tls_path):
         HTTPServer.__init__(self, address, handler_cls)
         self.token_ready = token_ready
         self.using_tls = False
+        self.tls_path = tls_path
 
-    def use_tls(self, tls_path):
-        if not os.path.isfile(tls_path):
-            command = "openssl req -new -x509 -keyout {} -out {} -days 365 -nodes -subj \"/C=CA/ST=Ontario/L=Toronto/O=Zero Gravity Labs/CN=localhost\" 2>/dev/null".format(tls_path, tls_path)
+    def use_tls(self):
+        if not os.path.isfile(self.tls_path):
+            command = "openssl req -new -x509 -keyout {} -out {} -days 365 -nodes -subj \"/C=CA/ST=Ontario/L=Toronto/O=Zero Gravity Labs/CN=localhost\" 2>/dev/null".format(self.tls_path, self.tls_path)
             call(command, shell=True)
 
         if not self.using_tls:
-            self.secure_socket(tls_path)
+            self.secure_socket()
             self.using_tls = True
 
-    def secure_socket(self, tls_path):
-        self.socket = ssl.wrap_socket(self.socket, certfile=tls_path, server_side=True)
+    def secure_socket(self):
+        self.socket = ssl.wrap_socket(self.socket, certfile=self.tls_path, server_side=True)
 
 
 class HttpsRequestHandler(BaseHTTPRequestHandler):
@@ -127,7 +127,7 @@ class HttpsThread(Thread):
         self.server = server
 
     def run(self):
-        self.server.use_tls("server.pem")
+        self.server.use_tls()
         self.server.serve_forever()
 
 
