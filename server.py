@@ -1,21 +1,35 @@
-#!/usr/bin/env python3
+"""
+Todo :
+- handle access denial
+- more elegant way to start server and signal between threads
+"""
 
 import os
 import ssl
+import time
 
+from config import oauth_path
 from subprocess import call
 from threading import Thread
-from oauth import obtain_access_token
+from oauth import obtain_access_token, token_to_file
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 
 class HttpsServer(HTTPServer):
 
+    def __init__(self, address, handler_cls, token_ready):
+        HTTPServer.__init__(self, address, handler_cls)
+        self.token_ready = token_ready
+        self.using_tls = False
+
     def use_tls(self, tls_path):
         if not os.path.isfile(tls_path):
             command = "openssl req -new -x509 -keyout {} -out {} -days 365 -nodes -subj \"/C=CA/ST=Ontario/L=Toronto/O=Zero Gravity Labs/CN=localhost\" 2>/dev/null".format(tls_path, tls_path)
             call(command, shell=True)
-        self.secure_socket(tls_path)
+
+        if not self.using_tls:
+            self.secure_socket(tls_path)
+            self.using_tls = True
 
     def secure_socket(self, tls_path):
         self.socket = ssl.wrap_socket(self.socket, certfile=tls_path, server_side=True)
@@ -30,8 +44,14 @@ class HttpsRequestHandler(BaseHTTPRequestHandler):
             status = 200
             headers = {"Content-Type": "text/plain"}
             body = "Obtained authorization code."
+
             oauth = obtain_access_token(params)
-            print(oauth)
+            if oauth is not None:
+                token_to_file(oauth_path, oauth)
+
+            self.server.token_ready.acquire()
+            self.server.token_ready.notify()
+            self.server.token_ready.release()
         else:
             status = 400
             headers = {"Content-Type": "text/plain"}
@@ -103,7 +123,7 @@ class HttpResponse(object):
 class HttpsThread(Thread):
 
     def __init__(self, server):
-        Thread.__init__(self, daemon=False)
+        Thread.__init__(self, daemon=True)
         self.server = server
 
     def run(self):
@@ -111,20 +131,9 @@ class HttpsThread(Thread):
         self.server.serve_forever()
 
 
-def start_server(host, port):
-    server = HttpsServer((host, port), HttpsRequestHandler)
+def start_server(server):
     thread = HttpsThread(server)
     thread.start()
-    return server
 
-
-if __name__ == "__main__":
-
-    authorization_url = "https://slack.com/oauth/authorize?client_id=361449430741.360777286161&scope=channels%3Aread%2Cchannels%3Awrite&redirect_uri=https%3A%2F%2Flocalhost%3A8443%2Fslack-cli%2Fauthorize"
-    print("Please authorize slack-cli at: {}".format(authorization_url))
-
-    host, port = "127.0.0.1", 8443
-    print("Server starting on {}:{}".format(host, port))
-
-    server = start_server(host, port)
-    # server.shutdown()
+def shutdown_server(server):
+    server.shutdown()

@@ -1,7 +1,13 @@
+"""
+Todo :
+- duplicate function http_resp_json_body()
+- more elegant way to persist user credentials
+"""
+
 import json
 
-from config import conn, client_id, client_secret, redirect_uri
-from urllib.parse import quote
+from http.client import HTTPSConnection
+from config import client_id, client_secret, redirect_url
 
 
 class SlackOauthCredentials(object):
@@ -21,8 +27,29 @@ class SlackOauthCredentials(object):
     def __repr__(self):
         return self.__str__()
 
+def token_to_file(token_path, oauth):
+    payload = {
+        "code": oauth.code,
+        "access_token": oauth.access_token,
+        "scope": oauth.scope,
+        "user_id": oauth.user_id,
+        "team_name": oauth.team_name,
+        "team_id": oauth.team_id
+    }
+    f = open(token_path, "w")
+    f.write(json.dumps(payload))
+    f.close()
+
+def token_from_file(token_path):
+    try:
+        f = open(token_path, "r")
+        payload = json.loads(f.read())
+        return SlackOauthCredentials(payload["code"], payload["access_token"], payload["scope"], payload["user_id"], payload["team_name"], payload["team_id"])
+    except Exception as e:
+        print("Error loading token from file: {}".format(e))
 
 def obtain_access_token(params):
+    conn = HTTPSConnection("slack.com")
     access_token_reqs(conn, params["code"])
     data = http_resp_json_body(conn)
     return get_slack_oauth_creds(data, params["code"])
@@ -33,7 +60,7 @@ def access_token_reqs(conn, code):
 
 def access_token_path_query(code):
     path = "/api/oauth.access"
-    return "{}?client_id={}&client_secret={}&code={}&redirect_uri={}".format(path, client_id, client_secret, code, redirect_uri)
+    return "{}?client_id={}&client_secret={}&code={}&redirect_uri={}".format(path, client_id, client_secret, code, redirect_url)
 
 def http_resp_json_body(conn):
     try:
