@@ -8,6 +8,8 @@ Todo :
 - provide an "index" integer to output objects
 - provide option for history length
 - handle rate limit
+- interactive mode, with 2 way communication
+- python wheel structure
 """
 
 import os
