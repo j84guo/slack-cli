@@ -7,9 +7,9 @@ Todo :
 import os
 import ssl
 
-from config import oauth_path
 from subprocess import call
-from threading import Thread
+from config import oauth_path, tls_path
+from threading import Thread, Condition
 from oauth import obtain_access_token, token_to_file
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -130,6 +130,10 @@ class HttpsThread(Thread):
         self.server.use_tls()
         self.server.serve_forever()
 
+def make_server(host, port):
+    token_ready = Condition()
+    server = HttpsServer((host, port), HttpsRequestHandler, token_ready, tls_path)
+    return server, token_ready
 
 def start_server(server):
     thread = HttpsThread(server)
