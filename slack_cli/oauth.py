@@ -7,7 +7,7 @@ Todo :
 import json
 
 from http.client import HTTPSConnection
-from config import client_id, client_secret, redirect_url
+from slack_cli.config import client_id, client_secret, redirect_url
 
 
 class SlackOauthCredentials(object):

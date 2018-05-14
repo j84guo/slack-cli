@@ -8,7 +8,7 @@ Todo :
 import json
 
 from http.client import HTTPSConnection
-from slack_models import SlackChannel, SlackInstantMessage, SlackMessage, SlackFile
+from slack_cli.slack_models import SlackChannel, SlackInstantMessage, SlackMessage, SlackFile
 
 
 class SlackService(object):

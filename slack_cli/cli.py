@@ -14,11 +14,11 @@ Todo :
 import os
 import sys
 
-from slack_service import SlackService
-from slack_viewer import SlackViewer
-from oauth import token_from_file
-from config import oauth_path, authorization_url
-from server import make_server, start_server, shutdown_server
+from slack_cli.slack_service import SlackService
+from slack_cli.slack_viewer import SlackViewer
+from slack_cli.oauth import token_from_file
+from slack_cli.config import oauth_path, authorization_url, slack_cli_path
+from slack_cli.server import make_server, start_server, shutdown_server
 
 def valid_args(args):
     if len(args) < 2:
@@ -77,10 +77,13 @@ def authorize_slack_cli():
 
     shutdown_server(server)
 
-if __name__ == "__main__":
+def main():
 
     if not valid_args(sys.argv):
         sys.exit(usage_text())
+
+    if not os.path.exists(slack_cli_path):
+        os.mkdir(slack_cli_path)
 
     if not os.path.exists(oauth_path):
         authorize_slack_cli()

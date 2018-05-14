@@ -6,11 +6,12 @@ Todo :
 
 import os
 import ssl
+import time
 
 from subprocess import call
-from config import oauth_path, tls_path
+from slack_cli.config import oauth_path, tls_path
 from threading import Thread, Condition
-from oauth import obtain_access_token, token_to_file
+from slack_cli.oauth import obtain_access_token, token_to_file
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 
@@ -24,7 +25,8 @@ class HttpsServer(HTTPServer):
 
     def use_tls(self):
         if not os.path.isfile(self.tls_path):
-            command = "openssl req -new -x509 -keyout {} -out {} -days 365 -nodes -subj \"/C=CA/ST=Ontario/L=Toronto/O=Zero Gravity Labs/CN=localhost\" 2>/dev/null".format(self.tls_path, self.tls_path)
+            print("Creating self signed ssl certificate at {}".format(tls_path))
+            command = "openssl req -new -x509 -keyout \"{}\" -out \"{}\" -days 365 -nodes -subj \"/C=CA/ST=Ontario/L=Toronto/O=Zero Gravity Labs/CN=localhost\" 2>/dev/null".format(self.tls_path, self.tls_path)
             call(command, shell=True)
 
         if not self.using_tls:
