@@ -90,36 +90,6 @@ class HttpsRequestHandler(BaseHTTPRequestHandler):
         return params
 
 
-class HttpRequest(object):
-
-    def __init__(self, verb, path, params, headers, body):
-        self.verb = verb
-        self.path = path
-        self.params = params
-        self.headers = headers
-        self.body = body
-
-    def __str__(self):
-        return "<HttpRequest object verb:{}, path:{}, params:{}, headers:{}, body:{}".format(verb, path, params, headers, body)
-
-    def __repr__(self):
-        return self.__str__()
-
-
-class HttpResponse(object):
-
-    def __init__(self, status, headers, body):
-        self.status = status
-        self.headers = headers
-        self.body = body
-
-    def __str__(self):
-        return "<HttpResponse object status:{}, headers:{}, body:{}".format(status, headers, body)
-
-    def __repr__(self):
-        return self.__str__()
-
-
 class HttpsThread(Thread):
 
     def __init__(self, server):

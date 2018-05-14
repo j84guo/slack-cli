@@ -2,23 +2,22 @@
 
 """
 Todo :
-- authorize oauth after ensuring the command is valid
 - format output
 - sort output by newest/unseen
 - provide an "index" integer to output objects
 - provide option for history length
 - handle rate limit
-- interactive mode, with 2 way communication
+- interactive/streaming mode, with two way communication
 - python wheel structure
 """
 
 import os
 import sys
 
-from config import oauth_path, authorization_url
+from slack_service import SlackService
 from oauth import token_from_file
+from config import oauth_path, authorization_url
 from server import make_server, start_server, shutdown_server
-from slack import list_channels, list_instant_messages, channels_history, instant_messages_history, post_message
 
 def valid_args(args):
     if len(args) < 2:
@@ -42,21 +41,21 @@ def usage_text():
 
     return "".join(out)
 
-def process_command(oauth):
+def process_command(service):
     command = sys.argv[1]
 
     if command == "oauth":
         out = str(oauth)
     elif command == "ch":
-        out = list_channels(oauth)
+        out = service.list_channels()
     elif command == "im":
-        out = list_instant_messages(oauth)
+        out = service.list_instant_messages()
     elif command == "ch_h":
-        out = channels_history(oauth, sys.argv[2])
+        out = service.channels_history(sys.argv[2])
     elif command == "im_h":
-        out = instant_messages_history(oauth, sys.argv[2])
+        out = service.instant_messages_history(sys.argv[2])
     elif command == "im_p" or command == "ch_p":
-        out = post_message(oauth, sys.argv[2], sys.argv[3])
+        out = service.post_message(sys.argv[2], sys.argv[3])
     else:
         out = ""
 
@@ -83,6 +82,7 @@ if __name__ == "__main__":
 
     print("Loading oauth access token...")
     oauth = token_from_file(oauth_path)
+    service = SlackService(oauth)
 
     print("Processing command...")
-    process_command(oauth)
+    process_command(service)
