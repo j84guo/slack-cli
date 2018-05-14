@@ -15,6 +15,7 @@ import os
 import sys
 
 from slack_service import SlackService
+from slack_viewer import SlackViewer
 from oauth import token_from_file
 from config import oauth_path, authorization_url
 from server import make_server, start_server, shutdown_server
@@ -41,19 +42,23 @@ def usage_text():
 
     return "".join(out)
 
-def process_command(service):
+def process_command(service, viewer):
     command = sys.argv[1]
 
     if command == "oauth":
         out = str(oauth)
     elif command == "ch":
-        out = service.list_channels()
+        channels = service.list_channels()
+        out = viewer.view_channels(channels)
     elif command == "im":
-        out = service.list_instant_messages()
+        instant_messages = service.list_instant_messages()
+        out = viewer.view_instant_messages(instant_messages)
     elif command == "ch_h":
-        out = service.channels_history(sys.argv[2])
+        history = service.channels_history(sys.argv[2])
+        out = viewer.view_history(history)
     elif command == "im_h":
-        out = service.instant_messages_history(sys.argv[2])
+        history = service.instant_messages_history(sys.argv[2])
+        out = viewer.view_history(history)
     elif command == "im_p" or command == "ch_p":
         out = service.post_message(sys.argv[2], sys.argv[3])
     else:
@@ -83,6 +88,7 @@ if __name__ == "__main__":
     print("Loading oauth access token...")
     oauth = token_from_file(oauth_path)
     service = SlackService(oauth)
+    viewer = SlackViewer()
 
     print("Processing command...")
-    process_command(service)
+    process_command(service, viewer)

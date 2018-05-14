@@ -100,7 +100,8 @@ class SlackService(object):
 
     def instant_messages_history(self, id):
         self.instant_messages_history_reqs(self.conn, id)
-        return self.http_resp_json_body(self.conn)
+        body = self.http_resp_json_body(self.conn)
+        return self.build_instant_messages_history(body)
 
     def instant_messages_history_reqs(self, conn, id):
         headers = self.oauth_header()
