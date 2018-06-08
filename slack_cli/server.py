@@ -51,8 +51,19 @@ class HttpsRequestHandler(BaseHTTPRequestHandler):
             if oauth is not None:
                 token_to_file(oauth_path, oauth)
 
+            # acquire the underlying lock (this could be a critical section if
+            # both threads try to access the resource concurrently)
             self.server.token_ready.acquire()
+
+            # notify a waiting thread
             self.server.token_ready.notify()
+
+            # release the underlying lock (allowing the thread to acquire the mutex)
+            # in the event that in between this thread relasing the lock and the
+            # waiting thread acquiring the lock, another thread acquires the lock
+            # changes the shared resource, and then releases the lock
+            # (spurious wakeup) the waiting thread will go back to sleep, since it's
+            # coded to check the codition before proceeding
             self.server.token_ready.release()
         else:
             status = 400

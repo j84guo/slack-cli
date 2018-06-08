@@ -2,3 +2,6 @@ __pycache__/
 .pyc
 oauth.json
 config.py
+build/
+dist/
+slack_cli.egg-info

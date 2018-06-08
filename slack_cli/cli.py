@@ -71,11 +71,19 @@ def authorize_slack_cli():
     server, token_ready = make_server("127.0.0.1", 8443)
     start_server(server)
 
+    # acquires the shared resource lock (means no producer is accessing the resource)
+    # checks the codition (oauth_path existence)
+    # sleeps if the condition is not true
+    # upon waking, we check the codition once more, to handle
+    # spurious wakeups
     token_ready.acquire()
     while not os.path.exists(oauth_path):
         token_ready.wait()
 
     shutdown_server(server)
+
+    # at this point the lock should be released
+    token_ready.release();
 
 def main():
 
